@@ -2,23 +2,27 @@ import streamlit as st
 import numpy as np
 import pickle
 import re
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.sequence import pad_sequences
 import nltk
+
 from nltk.corpus import stopwords
+from tensorflow.keras.models import load_model
+from tensorflow.keras.layers import SimpleRNN
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 # ---------------- PAGE CONFIG ----------------
 
 st.set_page_config(
-    page_title="Mental Health Monitor",
+    page_title="Mental Health Monitoring",
     page_icon="🧠",
     layout="wide"
 )
 
 # ---------------- LOAD CSS ----------------
 
-def local_css(cssfile):
-    with open(cssfile) as f:
+def local_css(file_name):
+
+    with open(file_name) as f:
+
         st.markdown(
             f"<style>{f.read()}</style>",
             unsafe_allow_html=True
@@ -26,35 +30,67 @@ def local_css(cssfile):
 
 local_css("style.css")
 
-# ---------------- LOAD FILES ----------------
-
-model = load_model(
-    "mental_health_rnn_model.h5"
-)
-
-with open(
-    "tokenizer.pkl",
-    "rb"
-) as f:
-
-    tokenizer=pickle.load(f)
-
-with open(
-    "label_encoder.pkl",
-    "rb"
-) as f:
-
-    encoder=pickle.load(f)
-
 # ---------------- NLTK ----------------
 
-nltk.download("stopwords")
+try:
+
+    nltk.data.find("corpora/stopwords")
+
+except:
+
+    nltk.download("stopwords")
 
 stop_words=set(
     stopwords.words("english")
 )
 
+# ---------------- LOAD MODEL ----------------
+
+@st.cache_resource
+def load_all():
+
+    model=load_model(
+        "mental_health_rnn_model.h5",
+        compile=False,
+        custom_objects={
+            "SimpleRNN":SimpleRNN
+        }
+    )
+
+    with open(
+        "tokenizer.pkl",
+        "rb"
+    ) as f:
+
+        tokenizer=pickle.load(f)
+
+    with open(
+        "label_encoder.pkl",
+        "rb"
+    ) as f:
+
+        encoder=pickle.load(f)
+
+    return model,tokenizer,encoder
+
+
+try:
+
+    model,tokenizer,encoder=load_all()
+
+except Exception as e:
+
+    st.error(
+        f"Error loading model: {e}"
+    )
+
+    st.stop()
+
+
+# ---------------- SETTINGS ----------------
+
 max_len=100
+
 
 # ---------------- PREPROCESS ----------------
 
@@ -73,93 +109,113 @@ def preprocess_text(text):
     words=text.split()
 
     words=[
-        w for w in words
+        w
+        for w in words
         if w not in stop_words
     ]
 
     return " ".join(words)
+
 
 # ---------------- TIPS ----------------
 
 tips={
 
 "Anxiety":
-"💙 Take a deep breath. Try a short walk or speak with someone you trust.",
+"💙 Slow down. Take deep breaths and speak with someone you trust.",
 
 "Depression":
-"🌸 Small steps matter. Rest, hydrate, and reach out to supportive people.",
+"🌸 Small steps matter. Take a short walk and talk with loved ones.",
 
 "Stress":
-"☕ Take a short break and focus on one task at a time.",
+"☕ Take a break and focus on one task at a time.",
 
 "Suicidal":
-"❤️ Please connect with a trusted person or professional support immediately.",
+"❤️ Please reach out to trusted people or professional help immediately.",
 
 "Bipolar":
-"🌙 Sleep, routine and emotional support are important.",
+"🌙 Maintain sleep routines and stay connected with support systems.",
 
 "Normal":
-"✨ Keep maintaining your healthy and positive routines.",
+"✨ Great! Keep maintaining healthy habits.",
 
 "Personality disorder":
-"🫶 Practice self-awareness and seek support when needed."
+"🫶 Self awareness and support systems can help."
 }
+
 
 # ---------------- HERO ----------------
 
 st.markdown("""
 
-<div class="hero">
+<div class='hero'>
 
-<div class="hero-title">
+<div class='hero-title'>
+
 🧠 AI-Based Mental Health Sentiment Monitoring System
+
 </div>
 
-<div class="hero-sub">
+<div class='hero-sub'>
+
 Emotion Detection using Simple Recurrent Neural Networks
+
 </div>
 
-<div class="hero-badges">
+<div class='hero-badges'>
 
-<div class="badge">
+<div class='badge'>
 NLP
 </div>
 
-<div class="badge">
+<div class='badge'>
 Simple RNN
 </div>
 
-<div class="badge">
-Mental Health AI
+<div class='badge'>
+AI
 </div>
 
-<div class="badge">
-Emotion Detection
+<div class='badge'>
+Mental Health
 </div>
 
 </div>
 
 </div>
 
-""",unsafe_allow_html=True)
+""",
+unsafe_allow_html=True
+)
+
 
 # ---------------- ABOUT ----------------
 
 st.markdown("""
 
-<div class="panel">
+<div class='panel'>
 
-<div class="panel-label">
+<div class='panel-label'>
+
 ABOUT PROJECT
+
 </div>
 
-<h2>Why Emotional AI Matters</h2>
+<h2>
+
+Why Emotional AI Matters
+
+</h2>
 
 <p>
 
 Emotional AI can understand user feelings from text and help monitor emotional well-being.
 
-This system can support:
+</p>
+
+<p>
+
+This system supports:
 
 </p>
 
@@ -171,42 +227,55 @@ This system can support:
 
 <li>Counselor Assistance</li>
 
-<li>Early Intervention Support</li>
+<li>Early Intervention</li>
 
-<li>Emotion-Aware AI Systems</li>
+<li>Emotion-Aware Systems</li>
 
 </ul>
 
 <p>
 
-Simple RNN models learn sequence patterns and understand emotional context using hidden states.
+Simple RNN models learn sequence patterns and hidden-state context.
 
 </p>
 
 </div>
 
-""",unsafe_allow_html=True)
+""",
+unsafe_allow_html=True
+)
+
 
 # ---------------- INPUT ----------------
 
 st.markdown("""
 
-<div class="panel">
+<div class='panel'>
 
-<div class="panel-label">
+<div class='panel-label'>
+
 USER INPUT
-</div>
-
-<h2>Enter Thoughts</h2>
 
 </div>
 
-""",unsafe_allow_html=True)
+<h2>
+
+Enter Thoughts
+
+</h2>
+
+</div>
+
+""",
+unsafe_allow_html=True
+)
+
 
 user_text=st.text_area(
-"Enter your thoughts",
-placeholder="Enter your thoughts or feelings here...",
-height=180,
+"",
+placeholder=
+"Enter your thoughts or feelings here...",
+height=200,
 label_visibility="collapsed"
 )
 
@@ -224,11 +293,13 @@ Examples:
 
 """)
 
+
 # ---------------- BUTTON ----------------
 
 analyze=st.button(
 "Analyze Emotion"
 )
+
 
 # ---------------- PREDICTION ----------------
 
@@ -237,50 +308,56 @@ if analyze:
     if user_text.strip()=="":
 
         st.warning(
-        "Please enter some text."
+        "Please enter text"
         )
 
     else:
 
-        try:
+        with st.spinner(
+        "Analyzing..."
+        ):
 
-            with st.spinner(
-            "Analyzing..."
-            ):
+            clean=preprocess_text(
+                user_text
+            )
 
-                clean=preprocess_text(
-                    user_text
-                )
+            seq=tokenizer.texts_to_sequences(
+                [clean]
+            )
 
-                seq=tokenizer.texts_to_sequences(
-                    [clean]
-                )
+            padded=pad_sequences(
+                seq,
+                maxlen=max_len,
+                padding='post'
+            )
 
-                padded=pad_sequences(
-                    seq,
-                    maxlen=max_len,
-                    padding='post'
-                )
+            pred=model.predict(
+                padded,
+                verbose=0
+            )
 
-                pred=model.predict(
-                    padded,
-                    verbose=0
-                )
+            probs=pred[0]
 
-                probs=pred[0]
+            emotion=encoder.inverse_transform(
+                [np.argmax(probs)]
+            )[0]
 
-                emotion=encoder.inverse_transform(
-                    [np.argmax(probs)]
-                )[0]
+            confidence=np.max(
+                probs
+            )*100
 
-                confidence=float(
-                    np.max(probs)*100
-                )
+            status=(
+                "Healthy"
+                if emotion=="Normal"
+                else
+                "Needs Attention"
+            )
 
-# ---------- RESULT ----------
+# RESULT
 
-            st.markdown(
-            f"""
+        st.markdown(
+
+f"""
 
 <div class='verdict'>
 
@@ -301,12 +378,16 @@ Confidence:
 </div>
 
 """,
-unsafe_allow_html=True)
 
-# ---------- METRICS ----------
+unsafe_allow_html=True
 
-            st.markdown(
-            f"""
+)
+
+# METRICS
+
+        st.markdown(
+
+f"""
 
 <div class='metric-row'>
 
@@ -322,10 +403,11 @@ Prediction
 
 </div>
 
+
 <div class='metric-tile'>
 
 <span class='mt-val'>
-{confidence:.1f}%
+{confidence:.2f}%
 </span>
 
 <span class='mt-lbl'>
@@ -334,10 +416,11 @@ Confidence
 
 </div>
 
+
 <div class='metric-tile'>
 
 <span class='mt-val'>
-{"Healthy" if emotion=="Normal" else "Needs Attention"}
+{status}
 </span>
 
 <span class='mt-lbl'>
@@ -349,32 +432,38 @@ Status
 </div>
 
 """,
-unsafe_allow_html=True)
 
-# ---------- BARS ----------
+unsafe_allow_html=True
 
-            st.markdown(
-            "<h3>Emotion Probability</h3>",
-            unsafe_allow_html=True
+)
+
+# BARS
+
+        st.markdown(
+        "<h3>Emotion Probability</h3>",
+        unsafe_allow_html=True
+        )
+
+        for cls,prob in zip(
+            encoder.classes_,
+            probs
+        ):
+
+            pct=round(
+                prob*100,
+                1
             )
 
-            for cls,prob in zip(
-                encoder.classes_,
-                probs
-            ):
+            st.markdown(
 
-                pct=round(
-                    prob*100,
-                    1
-                )
-
-                st.markdown(
-                f"""
+f"""
 
 <div class='bar-row'>
 
 <div class='bar-name'>
+
 {cls}
+
 </div>
 
 <div class='bar-track'>
@@ -382,69 +471,29 @@ unsafe_allow_html=True)
 <div
 class='bar-fill'
 style='width:{pct}%'>
+
 </div>
 
 </div>
 
 <div class='bar-pct'>
+
 {pct}%
+
 </div>
 
 </div>
 
 """,
+
 unsafe_allow_html=True
 )
 
-# ---------- GUIDANCE ----------
+# TIPS
 
-            st.success(
-                tips.get(
-                    emotion,
-                    "Take care of yourself."
-                )
+        st.success(
+            tips.get(
+                emotion,
+                "Take care of yourself"
             )
-
-# ---------- FOOTER ----------
-
-            st.markdown("""
-
-<div class='info-grid'>
-
-<div class='info-tile'>
-<div class='info-title'>
-Emotional Monitoring
-</div>
-<div class='info-body'>
-Detect emotional trends from text.
-</div>
-</div>
-
-<div class='info-tile'>
-<div class='info-title'>
-AI Sequence Learning
-</div>
-<div class='info-body'>
-RNN learns context from previous words.
-</div>
-</div>
-
-<div class='info-tile'>
-<div class='info-title'>
-Wellness Guidance
-</div>
-<div class='info-body'>
-Provides supportive emotional tips.
-</div>
-</div>
-
-</div>
-
-""",
-unsafe_allow_html=True)
-
-        except Exception as e:
-
-            st.error(
-                f"Error: {e}"
-            )
+        )
