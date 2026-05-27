@@ -1,7 +1,6 @@
-streamlit
-tensorflow
-numpy
-pandas
-nltk
-plotly
-scikit-learn
+streamlit==1.35.0
+numpy==1.26.4
+tensorflow==2.16.1
+nltk==3.8.1
+gdown==5.2.0
+h5py==3.11.0

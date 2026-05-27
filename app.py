@@ -4,6 +4,7 @@ import pickle
 import re
 import nltk
 import os
+import gdown
 
 from nltk.corpus import stopwords
 from tensorflow.keras.models import load_model
@@ -45,7 +46,7 @@ stop_words = set(
     stopwords.words("english")
 )
 
-# ---------------- LOAD MODEL ----------------
+# ---------------- PATHS ----------------
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -63,6 +64,22 @@ ENCODER_PATH = os.path.join(
     BASE_DIR,
     "label_encoder.pkl"
 )
+
+# ---------------- DOWNLOAD MODEL ----------------
+
+if not os.path.exists(MODEL_PATH):
+
+    file_id = "1QFepboqDbyVX9EJucc8WuXC0OOMh5Lpm"
+
+    url = f"https://drive.google.com/uc?id={file_id}"
+
+    gdown.download(
+        url,
+        MODEL_PATH,
+        quiet=False
+    )
+
+# ---------------- LOAD MODEL ----------------
 
 @st.cache_resource
 def load_all():
@@ -104,11 +121,9 @@ except Exception as e:
 
     st.stop()
 
-
 # ---------------- SETTINGS ----------------
 
 max_len = 100
-
 
 # ---------------- PREPROCESS ----------------
 
@@ -133,7 +148,6 @@ def preprocess_text(text):
     ]
 
     return " ".join(words)
-
 
 # ---------------- TIPS ----------------
 
@@ -160,7 +174,6 @@ tips = {
     "Personality disorder":
     "🫶 Self awareness and support systems can help."
 }
-
 
 # ---------------- HERO ----------------
 
@@ -205,7 +218,6 @@ Mental Health
 """,
 unsafe_allow_html=True
 )
-
 
 # ---------------- ABOUT ----------------
 
@@ -263,7 +275,6 @@ Simple RNN models learn sequence patterns and hidden-state context.
 unsafe_allow_html=True
 )
 
-
 # ---------------- INPUT ----------------
 
 st.markdown("""
@@ -288,11 +299,9 @@ Enter Thoughts
 unsafe_allow_html=True
 )
 
-
 user_text = st.text_area(
     "",
-    placeholder=
-    "Enter your thoughts or feelings here...",
+    placeholder="Enter your thoughts or feelings here...",
     height=200,
     label_visibility="collapsed"
 )
@@ -311,13 +320,11 @@ Examples:
 
 """)
 
-
 # ---------------- BUTTON ----------------
 
 analyze = st.button(
     "Analyze Emotion"
 )
-
 
 # ---------------- PREDICTION ----------------
 
@@ -421,7 +428,6 @@ Prediction
 
 </div>
 
-
 <div class='metric-tile'>
 
 <span class='mt-val'>
@@ -433,7 +439,6 @@ Confidence
 </span>
 
 </div>
-
 
 <div class='metric-tile'>
 
