@@ -3,6 +3,7 @@ import numpy as np
 import pickle
 import re
 import nltk
+import os
 
 from nltk.corpus import stopwords
 from tensorflow.keras.models import load_model
@@ -40,43 +41,60 @@ except:
 
     nltk.download("stopwords")
 
-stop_words=set(
+stop_words = set(
     stopwords.words("english")
 )
 
 # ---------------- LOAD MODEL ----------------
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+MODEL_PATH = os.path.join(
+    BASE_DIR,
+    "mental_health_rnn_model.h5"
+)
+
+TOKENIZER_PATH = os.path.join(
+    BASE_DIR,
+    "tokenizer.pkl"
+)
+
+ENCODER_PATH = os.path.join(
+    BASE_DIR,
+    "label_encoder.pkl"
+)
+
 @st.cache_resource
 def load_all():
 
-    model=load_model(
-        "mental_health_rnn_model.h5",
+    model = load_model(
+        MODEL_PATH,
         compile=False,
         custom_objects={
-            "SimpleRNN":SimpleRNN
+            "SimpleRNN": SimpleRNN
         }
     )
 
     with open(
-        "tokenizer.pkl",
+        TOKENIZER_PATH,
         "rb"
     ) as f:
 
-        tokenizer=pickle.load(f)
+        tokenizer = pickle.load(f)
 
     with open(
-        "label_encoder.pkl",
+        ENCODER_PATH,
         "rb"
     ) as f:
 
-        encoder=pickle.load(f)
+        encoder = pickle.load(f)
 
-    return model,tokenizer,encoder
+    return model, tokenizer, encoder
 
 
 try:
 
-    model,tokenizer,encoder=load_all()
+    model, tokenizer, encoder = load_all()
 
 except Exception as e:
 
@@ -89,26 +107,26 @@ except Exception as e:
 
 # ---------------- SETTINGS ----------------
 
-max_len=100
+max_len = 100
 
 
 # ---------------- PREPROCESS ----------------
 
 def preprocess_text(text):
 
-    text=str(text)
+    text = str(text)
 
-    text=text.lower()
+    text = text.lower()
 
-    text=re.sub(
+    text = re.sub(
         r'[^a-zA-Z\s]',
         '',
         text
     )
 
-    words=text.split()
+    words = text.split()
 
-    words=[
+    words = [
         w
         for w in words
         if w not in stop_words
@@ -119,28 +137,28 @@ def preprocess_text(text):
 
 # ---------------- TIPS ----------------
 
-tips={
+tips = {
 
-"Anxiety":
-"💙 Slow down. Take deep breaths and speak with someone you trust.",
+    "Anxiety":
+    "💙 Slow down. Take deep breaths and speak with someone you trust.",
 
-"Depression":
-"🌸 Small steps matter. Take a short walk and talk with loved ones.",
+    "Depression":
+    "🌸 Small steps matter. Take a short walk and talk with loved ones.",
 
-"Stress":
-"☕ Take a break and focus on one task at a time.",
+    "Stress":
+    "☕ Take a break and focus on one task at a time.",
 
-"Suicidal":
-"❤️ Please reach out to trusted people or professional help immediately.",
+    "Suicidal":
+    "❤️ Please reach out to trusted people or professional help immediately.",
 
-"Bipolar":
-"🌙 Maintain sleep routines and stay connected with support systems.",
+    "Bipolar":
+    "🌙 Maintain sleep routines and stay connected with support systems.",
 
-"Normal":
-"✨ Great! Keep maintaining healthy habits.",
+    "Normal":
+    "✨ Great! Keep maintaining healthy habits.",
 
-"Personality disorder":
-"🫶 Self awareness and support systems can help."
+    "Personality disorder":
+    "🫶 Self awareness and support systems can help."
 }
 
 
@@ -271,12 +289,12 @@ unsafe_allow_html=True
 )
 
 
-user_text=st.text_area(
-"",
-placeholder=
-"Enter your thoughts or feelings here...",
-height=200,
-label_visibility="collapsed"
+user_text = st.text_area(
+    "",
+    placeholder=
+    "Enter your thoughts or feelings here...",
+    height=200,
+    label_visibility="collapsed"
 )
 
 st.info("""
@@ -296,8 +314,8 @@ Examples:
 
 # ---------------- BUTTON ----------------
 
-analyze=st.button(
-"Analyze Emotion"
+analyze = st.button(
+    "Analyze Emotion"
 )
 
 
@@ -305,55 +323,55 @@ analyze=st.button(
 
 if analyze:
 
-    if user_text.strip()=="":
+    if user_text.strip() == "":
 
         st.warning(
-        "Please enter text"
+            "Please enter text"
         )
 
     else:
 
         with st.spinner(
-        "Analyzing..."
+            "Analyzing..."
         ):
 
-            clean=preprocess_text(
+            clean = preprocess_text(
                 user_text
             )
 
-            seq=tokenizer.texts_to_sequences(
+            seq = tokenizer.texts_to_sequences(
                 [clean]
             )
 
-            padded=pad_sequences(
+            padded = pad_sequences(
                 seq,
                 maxlen=max_len,
                 padding='post'
             )
 
-            pred=model.predict(
+            pred = model.predict(
                 padded,
                 verbose=0
             )
 
-            probs=pred[0]
+            probs = pred[0]
 
-            emotion=encoder.inverse_transform(
+            emotion = encoder.inverse_transform(
                 [np.argmax(probs)]
             )[0]
 
-            confidence=np.max(
+            confidence = np.max(
                 probs
-            )*100
+            ) * 100
 
-            status=(
+            status = (
                 "Healthy"
-                if emotion=="Normal"
+                if emotion == "Normal"
                 else
                 "Needs Attention"
             )
 
-# RESULT
+        # RESULT
 
         st.markdown(
 
@@ -383,7 +401,7 @@ unsafe_allow_html=True
 
 )
 
-# METRICS
+        # METRICS
 
         st.markdown(
 
@@ -437,20 +455,20 @@ unsafe_allow_html=True
 
 )
 
-# BARS
+        # BARS
 
         st.markdown(
-        "<h3>Emotion Probability</h3>",
-        unsafe_allow_html=True
+            "<h3>Emotion Probability</h3>",
+            unsafe_allow_html=True
         )
 
-        for cls,prob in zip(
+        for cls, prob in zip(
             encoder.classes_,
             probs
         ):
 
-            pct=round(
-                prob*100,
+            pct = round(
+                prob * 100,
                 1
             )
 
@@ -489,7 +507,7 @@ style='width:{pct}%'>
 unsafe_allow_html=True
 )
 
-# TIPS
+        # TIPS
 
         st.success(
             tips.get(
